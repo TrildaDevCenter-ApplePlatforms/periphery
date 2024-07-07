@@ -27,11 +27,8 @@ struct ScanCommand: FrontendCommand {
     @Option(parsing: .upToNextOption, help: "File target mapping configuration file paths. For use with third-party build systems")
     var fileTargetsPath: [FilePath] = defaultConfiguration.$fileTargetsPath.defaultValue
 
-    @Option(parsing: .upToNextOption, help: "Schemes that must be built in order to produce the targets passed to the --targets option. Xcode projects only")
+    @Option(parsing: .upToNextOption, help: "TODO") // TODO: Update, explain targets?
     var schemes: [String] = defaultConfiguration.$schemes.defaultValue
-
-    @Option(parsing: .upToNextOption, help: "Target names to scan. Required for Xcode projects. Optional for Swift Package Manager projects, default behavior is to scan all targets defined in Package.swift")
-    var targets: [String] = defaultConfiguration.$targets.defaultValue
 
     @Option(help: "Output format (allowed: \(OutputFormat.allValueStrings.joined(separator: ", ")))")
     var format: OutputFormat = defaultConfiguration.$outputFormat.defaultValue
@@ -117,9 +114,6 @@ struct ScanCommand: FrontendCommand {
     @Flag(help: "Only output results")
     var quiet: Bool = defaultConfiguration.$quiet.defaultValue
 
-    @Option(help: "JSON package manifest path (obtained using `swift package describe --type json` or manually)")
-    var jsonPackageManifestPath: String?
-
     @Option(help: "Baseline file path used to filter results")
     var baseline: FilePath?
 
@@ -137,43 +131,41 @@ struct ScanCommand: FrontendCommand {
 
         let configuration = Configuration.shared
         configuration.guidedSetup = setup
-        configuration.apply(\.$workspace, workspace)
-        configuration.apply(\.$project, project)
-        configuration.apply(\.$fileTargetsPath, fileTargetsPath)
-        configuration.apply(\.$schemes, schemes)
-        configuration.apply(\.$targets, targets)
-        configuration.apply(\.$indexExclude, indexExclude)
-        configuration.apply(\.$reportExclude, reportExclude)
-        configuration.apply(\.$reportInclude, reportInclude)
-        configuration.apply(\.$outputFormat, format)
-        configuration.apply(\.$retainFiles, retainFiles)
-        configuration.apply(\.$retainPublic, retainPublic)
-        configuration.apply(\.$retainAssignOnlyProperties, retainAssignOnlyProperties)
-        configuration.apply(\.$retainAssignOnlyPropertyTypes, retainAssignOnlyPropertyTypes)
-        configuration.apply(\.$retainObjcAccessible, retainObjcAccessible)
-        configuration.apply(\.$retainObjcAnnotated, retainObjcAnnotated)
-        configuration.apply(\.$retainUnusedProtocolFuncParams, retainUnusedProtocolFuncParams)
-        configuration.apply(\.$retainSwiftUIPreviews, retainSwiftUIPreviews)
-        configuration.apply(\.$disableRedundantPublicAnalysis, disableRedundantPublicAnalysis)
-        configuration.apply(\.$disableUnusedImportAnalysis, disableUnusedImportAnalysis)
-        configuration.apply(\.$externalEncodableProtocols, externalEncodableProtocols)
-        configuration.apply(\.$externalCodableProtocols, externalCodableProtocols)
-        configuration.apply(\.$externalTestCaseClasses, externalTestCaseClasses)
-        configuration.apply(\.$verbose, verbose)
-        configuration.apply(\.$quiet, quiet)
-        configuration.apply(\.$disableUpdateCheck, disableUpdateCheck)
-        configuration.apply(\.$strict, strict)
-        configuration.apply(\.$indexStorePath, indexStorePath)
-        configuration.apply(\.$skipBuild, skipBuild)
-        configuration.apply(\.$skipSchemesValidation, skipSchemesValidation)
-        configuration.apply(\.$cleanBuild, cleanBuild)
-        configuration.apply(\.$buildArguments, buildArguments)
-        configuration.apply(\.$relativeResults, relativeResults)
-        configuration.apply(\.$retainCodableProperties, retainCodableProperties)
-        configuration.apply(\.$retainEncodableProperties, retainEncodableProperties)
-        configuration.apply(\.$jsonPackageManifestPath, jsonPackageManifestPath)
-        configuration.apply(\.$baseline, baseline)
-        configuration.apply(\.$writeBaseline, writeBaseline)
+        configuration.$workspace.assign(workspace)
+        configuration.$project.assign(project)
+        configuration.$fileTargetsPath.assign(fileTargetsPath)
+        configuration.$schemes.assign(schemes)
+        configuration.$indexExclude.assign(indexExclude)
+        configuration.$reportExclude.assign(reportExclude)
+        configuration.$reportInclude.assign(reportInclude)
+        configuration.$outputFormat.assign(format)
+        configuration.$retainFiles.assign(retainFiles)
+        configuration.$retainPublic.assign(retainPublic)
+        configuration.$retainAssignOnlyProperties.assign(retainAssignOnlyProperties)
+        configuration.$retainAssignOnlyPropertyTypes.assign(retainAssignOnlyPropertyTypes)
+        configuration.$retainObjcAccessible.assign(retainObjcAccessible)
+        configuration.$retainObjcAnnotated.assign(retainObjcAnnotated)
+        configuration.$retainUnusedProtocolFuncParams.assign(retainUnusedProtocolFuncParams)
+        configuration.$retainSwiftUIPreviews.assign(retainSwiftUIPreviews)
+        configuration.$disableRedundantPublicAnalysis.assign(disableRedundantPublicAnalysis)
+        configuration.$disableUnusedImportAnalysis.assign(disableUnusedImportAnalysis)
+        configuration.$externalEncodableProtocols.assign(externalEncodableProtocols)
+        configuration.$externalCodableProtocols.assign(externalCodableProtocols)
+        configuration.$externalTestCaseClasses.assign(externalTestCaseClasses)
+        configuration.$verbose.assign(verbose)
+        configuration.$quiet.assign(quiet)
+        configuration.$disableUpdateCheck.assign(disableUpdateCheck)
+        configuration.$strict.assign(strict)
+        configuration.$indexStorePath.assign(indexStorePath)
+        configuration.$skipBuild.assign(skipBuild)
+        configuration.$skipSchemesValidation.assign(skipSchemesValidation)
+        configuration.$cleanBuild.assign(cleanBuild)
+        configuration.$buildArguments.assign(buildArguments)
+        configuration.$relativeResults.assign(relativeResults)
+        configuration.$retainCodableProperties.assign(retainCodableProperties)
+        configuration.$retainEncodableProperties.assign(retainEncodableProperties)
+        configuration.$baseline.assign(baseline)
+        configuration.$writeBaseline.assign(writeBaseline)
 
         try scanBehavior.main { project in
             try Scan().perform(project: project)

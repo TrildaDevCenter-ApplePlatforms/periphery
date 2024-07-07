@@ -72,43 +72,6 @@ var targets: [PackageDescription.Target] = [
         ],
         path: "Tests/Shared"
     ),
-    .target(
-        name: "ExternalModuleFixtures",
-        path: "Tests/Fixtures/ExternalModuleFixtures"
-    ),
-    .target(
-        name: "CrossModuleRetentionFixtures",
-        dependencies: [
-            .target(name: "CrossModuleRetentionSupportFixtures")
-        ],
-        path: "Tests/Fixtures/CrossModuleRetentionFixtures"
-    ),
-    .target(
-        name: "CrossModuleRetentionSupportFixtures",
-        path: "Tests/Fixtures/CrossModuleRetentionSupportFixtures"
-    ),
-    .target(
-        name: "RetentionFixtures",
-        dependencies: [
-            .target(name: "ExternalModuleFixtures")
-        ],
-        path: "Tests/Fixtures/RetentionFixtures"
-    ),
-    .target(
-        name: "UnusedParameterFixtures",
-        path: "Tests/Fixtures/UnusedParameterFixtures",
-        swiftSettings: [
-            .unsafeFlags(["-suppress-warnings"]) // Suppress warnings from testLocalVariableAssignment
-        ]
-    ),
-    .target(
-        name: "TypeSyntaxInspectorFixtures",
-        path: "Tests/Fixtures/TypeSyntaxInspectorFixtures"
-    ),
-    .target(
-        name: "DeclarationVisitorFixtures",
-        path: "Tests/Fixtures/DeclarationVisitorFixtures"
-    ),
     .testTarget(
         name: "PeripheryTests",
         dependencies: [
@@ -144,14 +107,6 @@ targets.append(contentsOf: [
             .target(name: "PeripheryKit"),
             .product(name: "XcodeProj", package: "XcodeProj"),
         ]
-    ),
-    .target(
-        name: "ObjcAccessibleRetentionFixtures",
-        path: "Tests/Fixtures/ObjcAccessibleRetentionFixtures"
-    ),
-    .target(
-        name: "ObjcAnnotatedRetentionFixtures",
-        path: "Tests/Fixtures/ObjcAnnotatedRetentionFixtures"
     ),
     .testTarget(
         name: "XcodeTests",

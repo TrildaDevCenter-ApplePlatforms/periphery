@@ -10,10 +10,6 @@ public enum OutputFormat: String, CaseIterable {
 
     public static let `default` = OutputFormat.xcode
 
-    init?(anyValue: Any) {
-        self.init(rawValue: anyValue as? String ?? "")
-    }
-
     @inlinable
     public var supportsAuxiliaryOutput: Bool {
         self == .xcode

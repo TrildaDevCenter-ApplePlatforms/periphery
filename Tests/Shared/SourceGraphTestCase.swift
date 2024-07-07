@@ -11,6 +11,7 @@ open class SourceGraphTestCase: XCTestCase {
 
     private static var graph = SourceGraph()
     private static var allIndexedDeclarations: Set<Declaration> = []
+    private static var sourceFiles: [SourceFile: [IndexUnit]] = [:]
 
     var configuration: Configuration { Self.configuration }
 
@@ -41,12 +42,20 @@ open class SourceGraphTestCase: XCTestCase {
         projectPath.chdir {
             driver = try! driverType.build()
             try! driver.build()
+            sourceFiles = try! driver.collect(logger: Logger().contextualized(with: "index"))
         }
     }
 
-    static func index() {
+    // TODO: Hide concept of fixtures?
+    static func index(fixture: FilePath? = nil) {
+        var indexSourceFiles = sourceFiles
+
+        if let fixture {
+            indexSourceFiles = sourceFiles.filter { $0.key.path == fixture }
+        }
+
         graph = SourceGraph()
-        try! Self.driver.index(graph: graph)
+        try! Self.driver.index(sourceFiles: indexSourceFiles, graph: graph, logger: Logger().contextualized(with: "index"))
         allIndexedDeclarations = graph.allDeclarations
         try! SourceGraphMutatorRunner.perform(graph: graph)
         results = ScanResultBuilder.build(for: graph)

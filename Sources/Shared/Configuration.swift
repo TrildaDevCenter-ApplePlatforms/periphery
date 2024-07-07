@@ -17,19 +17,16 @@ public final class Configuration {
     @Setting(key: "project", defaultValue: nil)
     public var project: String?
 
-    @Setting(key: "file_targets_path", defaultValue: [], valueConverter: filePathConverter)
+    @Setting(key: "file_targets_path", defaultValue: [])
     public var fileTargetsPath: [FilePath]
 
-    @Setting(key: "format", defaultValue: .default, valueConverter: { OutputFormat(anyValue: $0) })
+    @Setting(key: "format", defaultValue: .default)
     public var outputFormat: OutputFormat
 
     @Setting(key: "schemes", defaultValue: [])
     public var schemes: [String]
 
-    @Setting(key: "targets", defaultValue: [])
-    public var targets: [String]
-
-    @Setting(key: "index_exclude", defaultValue: [])
+    @Setting(key: "index_exclude", defaultValue: [".build/**/*"], requireDefaultValues: true)
     public var indexExclude: [String]
 
     @Setting(key: "report_exclude", defaultValue: [])
@@ -44,7 +41,7 @@ public final class Configuration {
     @Setting(key: "xcode_list_arguments", defaultValue: [])
     public var xcodeListArguments: [String]
 
-    @Setting(key: "retain_assign_only_property_types", defaultValue: [], valueSanitizer: PropertyTypeSanitizer.sanitize)
+    @Setting(key: "retain_assign_only_property_types", defaultValue: [], setter: PropertyTypeSanitizer.sanitize)
     public var retainAssignOnlyPropertyTypes: [String]
 
     @Setting(key: "external_encodable_protocols", defaultValue: [])
@@ -101,7 +98,7 @@ public final class Configuration {
     @Setting(key: "strict", defaultValue: false)
     public var strict: Bool
 
-    @Setting(key: "index_store_path", defaultValue: [], valueConverter: filePathConverter)
+    @Setting(key: "index_store_path", defaultValue: [])
     public var indexStorePath: [FilePath]
 
     @Setting(key: "skip_build", defaultValue: false)
@@ -115,9 +112,6 @@ public final class Configuration {
 
     @Setting(key: "relative_results", defaultValue: false)
     public var relativeResults: Bool
-
-    @Setting(key: "json_package_manifest_path", defaultValue: nil)
-    public var jsonPackageManifestPath: String?
 
     @Setting(key: "baseline", defaultValue: nil)
     public var baseline: FilePath?
@@ -148,10 +142,6 @@ public final class Configuration {
 
         if $schemes.hasNonDefaultValue {
             config[$schemes.key] = schemes
-        }
-
-        if $targets.hasNonDefaultValue {
-            config[$targets.key] = targets
         }
 
         if $outputFormat.hasNonDefaultValue {
@@ -274,10 +264,6 @@ public final class Configuration {
             config[$retainEncodableProperties.key] = retainEncodableProperties
         }
 
-        if $jsonPackageManifestPath.hasNonDefaultValue {
-            config[$jsonPackageManifestPath.key] = jsonPackageManifestPath
-        }
-
         if $baseline.hasNonDefaultValue {
             config[$baseline.key] = baseline
         }
@@ -310,8 +296,6 @@ public final class Configuration {
                 $fileTargetsPath.assign(value)
             case $schemes.key:
                 $schemes.assign(value)
-            case $targets.key:
-                $targets.assign(value)
             case $indexExclude.key:
                 $indexExclude.assign(value)
             case $reportExclude.key:
@@ -372,8 +356,6 @@ public final class Configuration {
                 $retainCodableProperties.assign(value)
             case $retainEncodableProperties.key:
                 $retainEncodableProperties.assign(value)
-            case $jsonPackageManifestPath.key:
-                $jsonPackageManifestPath.assign(value)
             case $baseline.key:
                 $baseline.assign(value)
             case $writeBaseline.key:
@@ -389,7 +371,6 @@ public final class Configuration {
         $project.reset()
         $fileTargetsPath.reset()
         $schemes.reset()
-        $targets.reset()
         $indexExclude.reset()
         $reportExclude.reset()
         $reportInclude.reset()
@@ -420,20 +401,11 @@ public final class Configuration {
         $relativeResults.reset()
         $retainCodableProperties.reset()
         $retainEncodableProperties.reset()
-        $jsonPackageManifestPath.reset()
         $baseline.reset()
         $writeBaseline.reset()
     }
 
     // MARK: - Helpers
-
-    public func apply<T: Equatable>(_ path: KeyPath<Configuration, Setting<T>>, _ value: T) {
-        let setting = self[keyPath: path]
-
-        if setting.defaultValue != value {
-            setting.wrappedValue = value
-        }
-    }
 
     private var _indexExcludeMatchers: [FilenameMatcher]?
     public var indexExcludeMatchers: [FilenameMatcher] {
@@ -492,30 +464,28 @@ public final class Configuration {
 }
 
 @propertyWrapper public final class Setting<Value: Equatable> {
-    typealias ValueConverter = (Any) -> Value?
-    typealias ValueSanitizer = (Value) -> Value
+    typealias Setter = (Value) -> Value
 
     public let defaultValue: Value
     fileprivate let key: String
 
-    private let valueConverter: ValueConverter
-    private let valueSanitizer: ValueSanitizer
+    private let setter: Setter
     private var value: Value
 
-    fileprivate init(key: String,
-                     defaultValue: Value,
-                     valueConverter: @escaping ValueConverter = { $0 as? Value },
-                     valueSanitizer: @escaping ValueSanitizer = { $0 }) {
+    fileprivate init(
+        key: String,
+        defaultValue: Value,
+        setter: @escaping Setter = { $0 }
+    ) {
         self.key = key
         self.value = defaultValue
         self.defaultValue = defaultValue
-        self.valueConverter = valueConverter
-        self.valueSanitizer = valueSanitizer
+        self.setter = setter
     }
 
     public var wrappedValue: Value {
         get { value }
-        set { value = valueSanitizer(newValue) }
+        set { value = setter(newValue) }
     }
 
     public var projectedValue: Setting { self }
@@ -524,8 +494,12 @@ public final class Configuration {
         value != defaultValue
     }
 
-    fileprivate func assign(_ value: Any) {
-        wrappedValue = valueConverter(value) ?? defaultValue
+    public func assign(_ value: Value) {
+        wrappedValue = value
+    }
+
+    public func assign(_ value: Any) {
+        wrappedValue = value as? Value ?? defaultValue
     }
 
     fileprivate func reset() {
@@ -533,12 +507,18 @@ public final class Configuration {
     }
 }
 
-private let filePathConverter: (Any) -> [FilePath]? = { value in
-    if let path = value as? String {
-        return [FilePath(path)]
-    } else if let paths = value as? [String] {
-        return paths.map { FilePath($0) }
+extension Setting where Value == [String] {
+    convenience init(
+        key: String,
+        defaultValue: Value,
+        requireDefaultValues: Bool
+    ) {
+        self.init(
+            key: key,
+            defaultValue: defaultValue,
+            setter: { value in
+                requireDefaultValues ? Array(Set(value).union(defaultValue)) : value
+            }
+        )
     }
-
-    return nil
 }
